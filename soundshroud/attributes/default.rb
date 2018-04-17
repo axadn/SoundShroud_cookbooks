@@ -3,18 +3,18 @@ default['nodejs']['version'] = "6.10.1"
 default['nodejs']['npm']['version'] = "5.2.0"
 default['nginx']['default_site_enabled'] = false
 
-default[:spooky][:git_repository] = "https://github.com/chungkikelly/spooky/"
-default[:spooky][:git_revision] = "master"
-default[:spooky][:path] = "/opt/spooky"
+default[:soundshroud][:git_repository] = "https://github.com/axadn/SoundShroud/"
+default[:soundshroud][:git_revision] = "master"
+default[:soundshroud][:path] = "/opt/soundshroud"
 
-default[:spooky][:rails_env] = "production"
-default[:spooky][:log_to_stdout] = "true"
+default[:soundshroud][:rails_env] = "production"
+default[:soundshroud][:log_to_stdout] = "true"
 
-default[:spooky][:environment] = {
-  "SECRET_KEY_BASE": node[:spooky][:secret_key_base],
-  "DATABASE_URL": node[:spooky][:database_url],
-  "RAILS_ENV": node[:spooky][:rails_env],
-  "RAILS_LOG_TO_STDOUT": node[:spooky][:log_to_stdout]
+default[:soundshroud][:environment] = {
+  "SECRET_KEY_BASE": node[:soundshroud][:secret_key_base],
+  "DATABASE_URL": node[:soundshroud][:database_url],
+  "RAILS_ENV": node[:soundshroud][:rails_env],
+  "RAILS_LOG_TO_STDOUT": node[:soundshroud][:log_to_stdout]
 }
 
-default[:spooky][:start_cmd] = "unicorn -E production -c /opt/unicorn.rb"
+default[:soundshroud][:start_cmd] = "unicorn -E production -c /opt/unicorn.rb"

@@ -1,10 +1,10 @@
 name        "soundshroud"
 description "Installs SoundShroud"
-maintainer  "Gene"
+maintainer  "axadn"
 license     "Apache 2.0"
 version     "1.0.0"
 
-depends 'apt'
+depends 'apt', '= 6.1.4'
 depends 'ruby-ng'
 depends 'nodejs'
 depends 'postgres'

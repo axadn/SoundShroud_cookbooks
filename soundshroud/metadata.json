@@ -2,13 +2,13 @@
   "name": "soundshroud",
   "description": "Installs SoundShroud",
   "long_description": "",
-  "maintainer": "Gene",
+  "maintainer": "axadn",
   "maintainer_email": "YOUR_EMAIL",
   "license": "Apache 2.0",
   "platforms": {
   },
   "dependencies": {
-    "apt": ">= 0.0.0",
+    "apt": "= 6.1.4",
     "ruby-ng": ">= 0.0.0",
     "nodejs": ">= 0.0.0",
     "postgres": ">= 0.0.0",
