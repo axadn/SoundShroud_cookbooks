@@ -4,7 +4,7 @@ DEPENDENCIES
     metadata: true
 
 GRAPH
-  apt (7.0.0)
+  apt (6.1.4)
   ark (3.1.0)
     build-essential (>= 0.0.0)
     seven_zip (>= 0.0.0)
@@ -42,6 +42,7 @@ GRAPH
   smf (2.2.8)
     rbac (>= 1.0.1)
   soundshroud (1.0.0)
+    apt (= 6.1.4)
     nginx (>= 0.0.0)
     nodejs (>= 0.0.0)
     postgres (>= 0.0.0)
