@@ -1,46 +1,63 @@
-# setup script here
-
-include_recipe "ruby-ng::dev"
-include_recipe "nodejs"
-include_recipe "nodejs::npm"
-include_recipe "postgres"
-include_recipe "nginx"
-include_recipe "unicorn"
-
-apt_package 'zlib1g-dev'
-apt_package 'libpq-dev'
-
-template "soundshroud_service" do
-    path "/etc/init.d/soundshroud"
-    source "soundshroud_service.erb"
-    owner "root"
-    group "root"
-    mode "0755"
-end
-
 service "soundshroud" do
-  supports :restart => true, :start => true, :stop => true, :reload => true
-  action [ :enable ]
+  action [:stop]
 end 
 
-template "#{node['nginx']['dir']}/sites-available/soundshroud" do
-  source 'soundshroud_site.erb'
-  notifies :reload, 'service[nginx]', :delayed
-end
-
-nginx_site 'soundshroud' do
-  action :enable
-end
-
-directory '/tmp/sockets/' do
-  owner 'root'
-  group 'root'
-  mode '0777'
+directory "#{node[:soundshroud][:path]}" do
+  owner 'ubuntu'
+  group 'ubuntu'
+  mode '0755'
+  recursive true
   action :create
 end
 
-unicorn_config "/opt/unicorn.rb" do
-  listen ({"unix:/tmp/sockets/unicorn.sock": nil})
-  working_directory node[:soundshroud][:path]
-  # /config/unicorn.rb
+# deploy script here
+git "#{node[:soundshroud][:path]}" do
+  repository node[:soundshroud][:git_repository]
+  revision node[:soundshroud][:git_revision]
+  environment ({"HOME"=>"/home/ubuntu"})
+  action :sync
+  user "ubuntu"
 end
+
+execute "Install Gems" do
+  cwd node[:soundshroud][:path]
+  command "bundle install"
+  user "ubuntu"
+  # group new_resource.group
+  environment ({"HOME"=>"/home/ubuntu"})
+  # not_if { package_installed? }
+end
+
+execute "Install NPM packages" do
+  cwd node[:soundshroud][:path]
+  command "npm install"
+  user "ubuntu"
+  # group new_resource.group
+  environment ({"HOME"=>"/home/ubuntu"})
+  # not_if { package_installed? }
+end
+
+execute "Compile Webpack Assets" do
+  cwd node[:soundshroud][:path]
+  command "./node_modules/.bin/webpack"
+  environment ({"NODE_ENV": "production", "HOME": "/home/ubuntu"})
+  user "ubuntu"
+end
+
+execute "Clobber Rails Assets" do
+  cwd node[:soundshroud][:path]
+  command "bundle exec rake assets:clobber"
+  environment ({"RAILS_ENV": "production", "HOME": "/home/ubuntu"})
+  user "ubuntu"
+end
+
+execute "Compile Rails Assets" do
+  cwd node[:soundshroud][:path]
+  command "bundle exec rake assets:precompile"
+  environment ({"RAILS_ENV": "production", "HOME": "/home/ubuntu"})
+  user "ubuntu"
+end
+
+service "soundshroud" do
+  action [ :enable, :start ]
+end 
