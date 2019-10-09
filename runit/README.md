@@ -1,7 +1,5 @@
 # runit Cookbook
 
-[![Build Status](https://travis-ci.org/chef-cookbooks/runit.svg?branch=master)](https://travis-ci.org/chef-cookbooks/runit) [![Cookbook Version](https://img.shields.io/cookbook/v/runit.svg)](https://supermarket.chef.io/cookbooks/runit)
-
 Installs runit and provides the `runit_service` service resource for managing processes (services) under runit.
 
 This cookbook does not use runit to replace system init, nor are there plans to do so.
@@ -9,8 +7,6 @@ This cookbook does not use runit to replace system init, nor are there plans to 
 For more information about runit:
 
 - <http://smarden.org/runit/>
-
-NOTE: The 5.0 release of this cookbook requires the ChefSpec which shipped in the later versions of ChefDK 3. If you use this cookbook along with ChefSpec in your environment then you will need to upgrade to the latest version of ChefDK / Workstation to prevent spec failures.
 
 ## Requirements
 
@@ -21,7 +17,7 @@ NOTE: The 5.0 release of this cookbook requires the ChefSpec which shipped in th
 
 ### Chef
 
-- Chef 14.0+
+- Chef 11+
 
 ### Cookbooks
 
@@ -29,6 +25,19 @@ NOTE: The 5.0 release of this cookbook requires the ChefSpec which shipped in th
 - yum-epel (for RHEL)
 
 ## Attributes
+
+See `attributes/default.rb` for defaults generated per platform.
+
+- `node['runit']['sv_bin']` - Full path to the `sv` binary.
+- `node['runit']['chpst_bin']` - Full path to the `chpst` binary.
+- `node['runit']['service_dir']` - Full path to the default "services" directory where enabled services are linked.
+- `node['runit']['sv_dir']` - Full path to the directory where service lives, which gets linked to `service_dir`.
+- `node['runit']['lsb_init_dir']` - Full path to the directory where the LSB-compliant init script interface will be created.
+- `node['runit']['start']` - Command to start the runsvdir service
+- `node['runit']['stop]` - Command to stop the runsvdir service
+- `node['runit']['reload']` - Command to reload the runsvdir service
+
+### Optional Attributes for RHEL systems
 
 - `node['runit']['prefer_local_yum']` - If `true`, assumes that a `runit` package is available on an already configured local yum repository. By default, the recipe installs the `runit` package from a Package Cloud repository (see below). This is set to the value of `node['runit']['use_package_from_yum']` for backwards compatibility, but otherwise defaults to `false`.
 
@@ -42,9 +51,13 @@ On RHEL-family systems, it will install the runit RPM using [Ian Meyer's Package
 
 On Debian family systems, the runit packages are maintained by the runit author, Gerrit Pape, and the recipe will use that for installation.
 
-## Resource
+On Gentoo, the runit ebuild package is installed.
 
-This cookbook has a resource, `runit_service`, for managing services under runit.
+## Resource/Provider
+
+This cookbook has a resource, `runit_service`, for managing services under runit. This service subclasses the Chef `service` resource.
+
+**This resource replaces the runit_service definition. See the CHANGELOG.md file in this cookbook for breaking change information and any actions you may need to take to update cookbooks using runit_service.**
 
 ### Actions
 
@@ -55,7 +68,6 @@ This cookbook has a resource, `runit_service`, for managing services under runit
 - **create** - create the service directory, but don't enable the service with symlink
 - **restart** - restarts the service with `sv restart`
 - **reload** - reloads the service with `sv force-reload`
-- **reload_log** - reloads the service's log service
 - **once** - starts the service with `sv once`.
 - **hup** - sends the `HUP` signal to the service with `sv hup`
 - **cont** - sends the `CONT` signal to the service
@@ -70,11 +82,11 @@ Service management actions are taken with runit's "`sv`" program.
 
 Read the `sv(8)` [man page](http://smarden.org/runit/sv.8.html) for more information on the `sv` program.
 
-### Properties
+### Parameter Attributes
 
-The first three properties, `sv_dir`, `service_dir`, and `sv_bin` will attempt to use the legacy node attributes, and fall back to hardcoded default values that match the settings used on Debian platform systems.
+The first three parameters, `sv_dir`, `service_dir`, and `sv_bin` will attempt to use the corresponding node attributes, and fall back to hardcoded default values that match the settings used on Debian platform systems.
 
-Many of these properties are only used in the `:enable` action.
+Many of these parameters are only used in the `:enable` action.
 
 - **sv_dir** - The base "service directory" for the services managed by the resource. By default, this will attempt to use the `node['runit']['sv_dir']` attribute, and falls back to `/etc/sv`.
 - **service_dir** - The directory where services are symlinked to be supervised by `runsvdir`. By default, this will attempt to use the `node['runit']['service_dir']` attribute, and falls back to `/etc/service`.
@@ -84,12 +96,11 @@ Many of these properties are only used in the `:enable` action.
 - **sv_timeout** - Override the default `sv` timeout of 7 seconds.
 - **sv_verbose** - Whether to enable `sv` verbose mode. Default is `false`.
 - **sv_templates** - If true, the `:enable` action will create the service directory with the appropriate templates. Default is `true`. Set this to `false` if the service has a package that provides its own service directory. See **Usage** examples.
-- **options** - DEPRECATED - Options passed as variables to templates, for compatibility with legacy runit service definition. Default is an empty hash.
+- **options** - Options passed as variables to templates, for compatibility with legacy runit service definition. Default is an empty hash.
 - **env** - A hash of environment variables with their values as content used in the service's `env` directory. Default is an empty hash. When this hash is non-empty, the contents of the runit service's `env` directory will be managed by Chef in order to conform to the declared state.
 - **log** - Whether to start the service's logger with svlogd, requires a template `sv-service_name-log-run.erb` to configure the log's run script. Default is true.
 - **default_logger** - Whether a default `log/run` script should be set up. If true, the default content of the run script will use `svlogd` to write logs to `/var/log/service_name`. Default is false.
 - **log_dir** - The directory where the `svlogd` log service will run. Used when `default_logger` is `true`. Default is `/var/log/service_name`
-- **log_flags** - The flags to pass to the `svlogd` command. Used when `default_logger` is `true`. Default is `-tt`
 - **log_size** - The maximum size a log file can grow to before it is automatically rotated. See svlogd(8) for the default value.
 - **log_num** - The maximum number of log files that will be retained after rotation. See svlogd(8) for the default value.
 - **log_min** - The minimum number of log files that will be retained after rotation (if svlogd cannot create a new file and the minimum has not been reached, it will block). Default is no minimum.
@@ -122,7 +133,7 @@ Unlike previous versions of the cookbook using the `runit_service` definition, t
 
 To get runit installed on supported platforms, use `recipe[runit]`. Once it is installed, use the `runit_service` resource to set up services to be managed by runit.
 
-In order to use the `runit_service` resource in your cookbook(s), each service managed will also need to have `sv-service_name-run.erb` and `sv-service_name-log-run.erb` templates created. If the `log` property is false, the log run script isn't created. If the `log` property is true, and `default_logger` is also true, the log run script will be created with the default content:
+In order to use the `runit_service` resource in your cookbook(s), each service managed will also need to have `sv-service_name-run.erb` and `sv-service_name-log-run.erb` templates created. If the `log` parameter is false, the log run script isn't created. If the `log` parameter is true, and `default_logger` is also true, the log run script will be created with the default content:
 
 ```bash
 #!/bin/sh
@@ -182,7 +193,7 @@ end
 
 **Check Script**
 
-To create a service that has a check script in its service directory, set the `check` property to `true`, and create a `sv-checker-check.erb` template.
+To create a service that has a check script in its service directory, set the `check` parameter to `true`, and create a `sv-checker-check.erb` template.
 
 ```ruby
 runit_service "checker" do
@@ -194,7 +205,7 @@ This will create `/etc/sv/checker/check`.
 
 **Finish Script**
 
-To create a service that has a finish script in its service directory, set the `finish` property to `true`, and create a `sv-finisher-finish.erb` template.
+To create a service that has a finish script in its service directory, set the `finish` parameter to `true`, and create a `sv-finisher-finish.erb` template.
 
 ```ruby
 runit_service "finisher" do
@@ -272,7 +283,7 @@ run: /home/floyd/service/floyds-app/: (pid 5287) 13s; run: log: (pid 4691) 726s
 
 **Options**
 
-Next, let's set up memcached under runit with some additional options using the `options` property. First, the `memcached/templates/default/sv-memcached-run.erb` template:
+Next, let's set up memcached under runit with some additional options using the `options` parameter. First, the `memcached/templates/default/sv-memcached-run.erb` template:
 
 ```bash
 #!/bin/sh
@@ -371,10 +382,10 @@ For redhat derivatives:
 
 - Author:: Adam Jacob [adam@chef.io](mailto:adam@chef.io)
 - Author:: Joshua Timberman [joshua@chef.io](mailto:joshua@chef.io)
-- Author:: Sean OMeara [sean@sean.io](mailto:sean@sean.io)
+- Author:: Sean OMeara [sean@chef.io](mailto:sean@chef.io)
 
 ```text
-Copyright:: 2008-2019, Chef Software, Inc
+Copyright:: 2008-2016, Chef Software, Inc
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

@@ -1,10 +1,10 @@
 #
 # Cookbook:: runit
-# Library:: helpers
+# Libraries:: helpers
 #
-# Author:: Joshua Timberman <joshua@chef.io>
-# Author:: Sean OMeara <sean@sean.io>
-# Copyright:: 2008-2019, Chef Software, Inc. <legal@chef.io>
+# Author: Joshua Timberman <joshua@chef.io>
+# Author: Sean OMeara <sean@chef.io>
+# Copyright 2008-2015, Chef Software, Inc. <legal@chef.io>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,28 +23,51 @@ module RunitCookbook
   module Helpers
     # include Chef::Mixin::ShellOut if it is not already included in the calling class
     def self.included(klass)
-      klass.class_eval { include Chef::Mixin::ShellOut } unless klass.ancestors.include?(Chef::Mixin::ShellOut)
+      unless klass.ancestors.include?(Chef::Mixin::ShellOut)
+        klass.class_eval { include Chef::Mixin::ShellOut }
+      end
+    end
+
+    # Default settings for resource properties.
+    def parsed_sv_bin
+      return new_resource.sv_bin if new_resource.sv_bin
+      '/usr/bin/sv'
+    end
+
+    def parsed_sv_dir
+      return new_resource.sv_dir if new_resource.sv_dir
+      '/etc/sv'
+    end
+
+    def parsed_service_dir
+      return new_resource.service_dir if new_resource.service_dir
+      '/etc/service'
+    end
+
+    def parsed_lsb_init_dir
+      return new_resource.lsb_init_dir if new_resource.lsb_init_dir
+      '/etc/init.d'
     end
 
     def down_file
-      ::File.join(sv_dir_name, 'down')
+      "#{sv_dir_name}/down"
     end
 
     def env_dir
-      ::File.join(sv_dir_name, 'env')
+      "#{sv_dir_name}/env"
     end
 
     def extra_env_files?
       files = []
-      Dir.glob(::File.join(sv_dir_name, 'env', '*')).each do |f|
+      Dir.glob("#{sv_dir_name}/env/*").each do |f|
         files << File.basename(f)
       end
       return true if files.sort != new_resource.env.keys.sort
       false
     end
 
-    def delete_extra_env_files
-      Dir.glob(::File.join(sv_dir_name, 'env', '*')).each do |f|
+    def zap_extra_env_files
+      Dir.glob("#{sv_dir_name}/env/*").each do |f|
         unless new_resource.env.key?(File.basename(f))
           File.unlink(f)
           Chef::Log.info("removing file #{f}")
@@ -53,130 +76,114 @@ module RunitCookbook
     end
 
     def wait_for_service
-      raise 'Runit does not appear to be installed. Include runit::default before using the resource!' unless binary_exists?
-
-      sleep 1 until ::FileTest.pipe?(::File.join(service_dir_name, 'supervise', 'ok'))
+      sleep 1 until ::FileTest.pipe?("#{service_dir_name}/supervise/ok")
 
       if new_resource.log
-        sleep 1 until ::FileTest.pipe?(::File.join(service_dir_name, 'log', 'supervise', 'ok'))
+        sleep 1 until ::FileTest.pipe?("#{service_dir_name}/log/supervise/ok")
       end
+    end
+
+    def runit_sv_works?
+      sv = shell_out("#{sv_bin} --help")
+      sv.exitstatus == 100 && sv.stderr =~ /usage: sv .* command service/
     end
 
     def runit_send_signal(signal, friendly_name = nil)
       friendly_name ||= signal
       converge_by("send #{friendly_name} to #{new_resource}") do
-        safe_sv_shellout!("#{sv_args}#{signal} #{service_dir_name}")
+        shell_out!("#{sv_bin} #{sv_args}#{signal} #{service_dir_name}")
         Chef::Log.info("#{new_resource} sent #{friendly_name}")
       end
     end
 
     def running?
-      cmd = safe_sv_shellout("#{sv_args}status #{service_dir_name}", returns: [0, 100])
-      !cmd.error? && cmd.stdout =~ /^run:/
+      cmd = shell_out("#{sv_bin} #{sv_args}status #{service_dir_name}")
+      (cmd.stdout =~ /^run:/ && cmd.exitstatus == 0)
     end
 
     def log_running?
-      cmd = safe_sv_shellout("#{sv_args}status #{::File.join(service_dir_name, 'log')}", returns: [0, 100])
-      !cmd.error? && cmd.stdout =~ /^run:/
+      cmd = shell_out("#{sv_bin} #{sv_args}status #{service_dir_name}/log")
+      (cmd.stdout =~ /^run:/ && cmd.exitstatus == 0)
     end
 
     def enabled?
-      ::File.exist?(::File.join(service_dir_name, 'run'))
+      ::File.exist?("#{service_dir_name}/run")
     end
 
     def log_service_name
-      ::File.join(new_resource.service_name, 'log')
+      "#{new_resource.service_name}/log"
     end
 
     def sv_dir_name
-      ::File.join(new_resource.sv_dir, new_resource.service_name)
+      "#{parsed_sv_dir}/#{new_resource.service_name}"
     end
 
     def sv_args
       sv_args = ''
-      sv_args += "-w #{new_resource.sv_timeout} " unless new_resource.sv_timeout.nil?
+      sv_args += "-w '#{new_resource.sv_timeout}' " unless new_resource.sv_timeout.nil?
       sv_args += '-v ' if new_resource.sv_verbose
       sv_args
     end
 
+    def sv_bin
+      parsed_sv_bin
+    end
+
     def service_dir_name
-      ::File.join(new_resource.service_dir, new_resource.service_name)
+      "#{new_resource.service_dir}/#{new_resource.service_name}"
     end
 
     def log_dir_name
-      ::File.join(new_resource.service_dir, new_resource.service_name, log)
+      "#{new_resource.service_dir}/#{new_resource.service_name}/log"
     end
 
-    def binary_exists?
-      begin
-        Chef::Log.debug("Checking to see if the runit binary exists by running #{new_resource.sv_bin}")
-        shell_out!(new_resource.sv_bin.to_s, returns: [0, 100])
-      rescue Errno::ENOENT
-        Chef::Log.debug("Failed to return 0 or 100 running #{new_resource.sv_bin}")
-        return false
-      end
-      true
+    def template_cookbook
+      new_resource.cookbook.nil? ? new_resource.cookbook_name.to_s : new_resource.cookbook
     end
 
-    def safe_sv_shellout(command, options = {})
-      begin
-        Chef::Log.debug("Attempting to run runit command: #{new_resource.sv_bin} #{command}")
-        cmd = shell_out("#{new_resource.sv_bin} #{command}", options)
-      rescue Errno::ENOENT
-        if binary_exists?
-          raise # Some other cause
-        else
-          raise 'Runit does not appear to be installed. You must install runit before using the runit_service resource!'
-        end
-      end
-      cmd
-    end
-
-    def safe_sv_shellout!(command, options = {})
-      safe_sv_shellout(command, options).tap(&:error!)
+    def default_logger_content
+      <<-EOS
+#!/bin/sh
+exec svlogd -tt #{new_resource.log_dir}
+      EOS
     end
 
     def disable_service
-      Chef::Log.debug("Attempting to disable runit service with: #{new_resource.sv_bin} #{sv_args}down #{service_dir_name}")
       shell_out("#{new_resource.sv_bin} #{sv_args}down #{service_dir_name}")
       FileUtils.rm(service_dir_name)
 
       # per the documentation, a service should be removed from supervision
       # within 5 seconds of removing the service dir symlink, so we'll sleep for 6.
       # otherwise, runit recreates the 'ok' named pipe too quickly
-      Chef::Log.debug('Sleeping 6 seconds to allow the disable to take effect')
       sleep(6)
       # runit will recreate the supervise directory and
       # pipes when the service is reenabled
-      Chef::Log.debug("Removing #{::File.join(sv_dir_name, 'supervise', 'ok')}")
-      FileUtils.rm(::File.join(sv_dir_name, 'supervise', 'ok'))
+      FileUtils.rm("#{sv_dir_name}/supervise/ok")
     end
 
     def start_service
-      safe_sv_shellout!("#{sv_args}start #{service_dir_name}")
+      shell_out!("#{new_resource.sv_bin} #{sv_args}start #{service_dir_name}")
     end
 
     def stop_service
-      safe_sv_shellout!("#{sv_args}stop #{service_dir_name}")
+      shell_out!("#{new_resource.sv_bin} #{sv_args}stop #{service_dir_name}")
     end
 
     def restart_service
-      safe_sv_shellout!("#{sv_args}restart #{service_dir_name}")
+      shell_out!("#{new_resource.sv_bin} #{sv_args}restart #{service_dir_name}")
     end
 
     def restart_log_service
-      safe_sv_shellout!("#{sv_args}restart #{::File.join(service_dir_name, 'log')}")
+      shell_out!("#{new_resource.sv_bin} #{sv_args}restart #{service_dir_name}/log")
     end
 
     def reload_service
-      safe_sv_shellout!("#{sv_args}force-reload #{service_dir_name}")
+      shell_out!("#{new_resource.sv_bin} #{sv_args}force-reload #{service_dir_name}")
     end
 
     def reload_log_service
       if log_running?
-        safe_sv_shellout!("#{sv_args}force-reload #{::File.join(service_dir_name, 'log')}")
-      else
-        Chef::Log.debug('Logging not running so doing nothing')
+        shell_out!("#{new_resource.sv_bin} #{sv_args}force-reload #{service_dir_name}/log")
       end
     end
   end
