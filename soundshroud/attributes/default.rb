@@ -21,4 +21,4 @@ default[:soundshroud][:environment] = {
   "S3_URL": node[:soundshroud][:s3_url]
 }
 
-default[:soundshroud][:start_cmd] = "unicorn -E production -c /opt/unicorn.rb"
+default[:soundshroud][:start_cmd] = "QUEUE=* rake environment resque:work && unicorn -E production -c /opt/unicorn.rb"
