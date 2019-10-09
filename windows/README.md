@@ -16,45 +16,17 @@ Provides a set of Windows-specific resources to aid in the creation of cookbooks
 
 ### Chef
 
-- Chef 12.7+
+- Chef 14+
 
 ## Resources
 
 ### Deprecated Resources Note
 
-As of Chef Client 13.0+ and 13.4+ windows_task and windows_path are now included in the Chef client. windows_task underwent a full rewrite that greatly improved the functionality and idempotency of the resource. We highly recommend using these new resources by upgrading to Chef 13.4 or later. If you are running these more recent Chef releases the windows_task and windows_path resources within chef-client will take precedence over those in this cookbook. In September 2018 we will release a new major version of this cookbook that removes windows_task and windows_path.
-
-As of Chef Client 14+ the auto_run, feature, feature_dism, feature_powershell, font, pagefile, printer_port, printer, and shortcut resources are now included in the Chef Client. If you are running Chef 14+ the resources in Chef client will take precedence over the resources in this cookbook. In April 2019 we will release a new major version of this cookbook that removes these resources.
-
-### windows_auto_run
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-#### Actions
-
-- `:create` - Create an item to be run at login
-- `:remove` - Remove an item that was previously setup to run at login
-
-#### Properties
-
-- `program_name` - Name attribute. The name of the value to be stored in the registry
-- `path` - The program to be run at login. This property was previous named `program`. Cookbooks using the `program` property will continue to function, but should be updated.
-- `args` - The arguments for the program
-- `root` - The registry root key to put the entry under--`:machine` (default) or `:user`
-
-#### Examples
-
-Run BGInfo at login
-
-```ruby
-windows_auto_run 'BGINFO' do
-  program 'C:/Sysinternals/bginfo.exe'
-  args    '\'C:/Sysinternals/Config.bgi\' /NOLICPROMPT /TIMER:0'
-  action  :create
-end
-```
+As of Chef 14.7+ the windows_share and windows_certificate resources are now included in the Chef Client. Also the windows_zipfile resource is replaced by the new archive_file resource in Chef 15.0.293+. If you are running Chef 14.7+ the resources in Chef client will take precedence over the resources in this cookbook. In November 2019 we will release a new major version of this cookbook that removes these resources.
 
 ### windows_certificate
+
+`Note`: This resource is now included in Chef 14.7 and later. There is no need to depend on the Windows cookbook for this resource.
 
 Installs a certificate into the Windows certificate store from a file, and grants read-only access to the private key for designated accounts. Due to current limitations in WinRM, installing certificated remotely may not work if the operation requires a user profile. Operations on the local machine store should still work.
 
@@ -63,6 +35,7 @@ Installs a certificate into the Windows certificate store from a file, and grant
 - `:create` - creates or updates a certificate.
 - `:delete` - deletes a certificate.
 - `:acl_add` - adds read-only entries to a certificate's private key ACL.
+- `:verify` - logs whether or not a certificate is valid
 
 #### Properties
 
@@ -162,6 +135,8 @@ end
 
 ### windows_dns
 
+`Note`: This resource is now included in Chef 15 and later. If you are using newer versions of [windows](https://devblogs.microsoft.com/powershell/configuration-in-a-devops-world-windows-powershell-desired-state-configuration/) then should use the core [resource](https://github.com/chef/chef/blob/master/RELEASE_NOTES.md#windows_dns_record-resource) instead of windows_dns.
+
 Configures A and CNAME records in Windows DNS. This requires the DNSCMD to be installed, which is done by adding the DNS role to the server or installing the Remote Server Admin Tools.
 
 #### Actions
@@ -204,132 +179,6 @@ windows_dns "myservice.chef.test" do
 end
 ```
 
-### windows_feature
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-**BREAKING CHANGE - Version 3.0.0**
-
-This resource has been moved from using LWRPs and multiple providers to using Custom Resources. To maintain functionality, you'll need to change `provider` to `install_method`.
-
-Windows Roles and Features can be thought of as built-in operating system packages that ship with the OS. A server role is a set of software programs that, when they are installed and properly configured, lets a computer perform a specific function for multiple users or other computers within a network. A Role can have multiple Role Services that provide functionality to the Role. Role services are software programs that provide the functionality of a role. Features are software programs that, although they are not directly parts of roles, can support or augment the functionality of one or more roles, or improve the functionality of the server, regardless of which roles are installed. Collectively we refer to all of these attributes as 'features'.
-
-This resource allows you to manage these 'features' in an unattended, idempotent way.
-
-There are two underlying resources that power `windows_feature` which map to the available installation systems on supported releases of Windows: [Deployment Image Servicing and Management (DISM)](http://msdn.microsoft.com/en-us/library/dd371719%28v=vs.85%29.aspx) and [PowerShell](https://technet.microsoft.com/en-us/library/cc731774(v=ws.11).aspx). Chef will set the default method to `:windows_feature_dism` if `dism.exe` is present on the system being configured and otherwise use `:windows_feature_powershell`.
-
-For more information on Roles, Role Services and Features see the [Microsoft TechNet article on the topic](http://technet.microsoft.com/en-us/library/cc754923.aspx). For a complete list of all features that are available on a node type either of the following commands at a command prompt:
-
-For Dism:
-
-```text
-dism /online /Get-Features
-```
-
-For PowerShell:
-
-```text
-get-windowsfeature
-```
-
-#### Actions
-
-- `:install` - install a Windows role/feature
-- `:remove` - remove a Windows role/feature
-- `:delete` - remove a Windows role/feature from the image
-
-#### Properties
-
-- `feature_name` - name of the feature/role(s) to install. The same feature may have different names depending on the underlying resource being used (ie DHCPServer vs DHCP; DNS-Server-Full-Role vs DNS).
-- `all` - Boolean. Optional. Default: false. For DISM this is the equivalent of specifying the /All switch to dism.exe, forcing all parent dependencies to be installed. With the PowerShell install method, the `-InstallAllSubFeatures` switch is applied. Note that these two methods may not produce identical results.
-- `management_tools` - Boolean. Optional. Default: false. PowerShell only. Includes the `-IncludeManagementTools` switch. Installs all applicable management tools of the roles, role services, or features specified by the feature name.
-- `source` - String. Optional. Uses local repository for feature install.
-- `timeout` - Integer. Optional. Default: 600\. Specifies a timeout (in seconds) for feature install.
-- `install_method` - Symbol. Optional. If not supplied, Chef will determine which method to use (in the order of `:windows_feature_dism`, `:windows_feature_servercmd`, `:windows_feature_powershell`)
-
-#### Examples
-
-Install the DHCP Server feature
-
-```ruby
-windows_feature 'DHCPServer' do
-  action :install
-end
-```
-
-Install the .Net 3.5.1 feature on Server 2012 using repository files on DVD and install all dependencies with a timeout of 900 seconds
-
-```ruby
-windows_feature "NetFx3" do
-  action :install
-  all true
-  source "d:\sources\sxs"
-  timeout 900
-end
-```
-
-Remove Telnet Server and Client features
-
-```ruby
-windows_feature ['TelnetServer', 'TelnetClient'] do
-  action :remove
-end
-```
-
-Add the SMTP Server feature using the PowerShell provider
-
-```ruby
-windows_feature "smtp-server" do
-  action :install
-  all true
-  install_method :windows_feature_powershell
-end
-```
-
-Install multiple features using one resource with the PowerShell provider
-
-```ruby
-windows_feature ['Web-Asp-Net45', 'Web-Net-Ext45'] do
-  action :install
-  install_method :windows_feature_powershell
-end
-```
-
-Install the Network Policy and Access Service feature, including the management tools. Which, for this example, will automatically install `RSAT-NPAS` as well.
-
-```ruby
-windows_feature 'NPAS' do
-  action :install
-  management_tools true
-  install_method :windows_feature_powershell
-end
-```
-
-### windows_font
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Installs font files. Sources the font by default from the cookbook, but a URI source can be specified as well.
-
-#### Actions
-
-- `:install` - install a font to the system fonts directory.
-
-#### Properties
-
-- `font_name` - The file name of the font file name to install. The path defaults to the files/default directory of the cookbook you're calling windows_font from. Defaults to the resource name.
-- `source` - A local filesystem path or URI to source the font file from..
-
-#### Examples
-
-```ruby
-windows_font 'Code New Roman.otf'
-
-windows_font 'Custom.otf' do
-  source "https://example.com/Custom.otf"
-end
-```
-
 ### windows_http_acl
 
 Sets the Access Control List for an http URL to grant non-admin accounts permission to open HTTP endpoints.
@@ -366,130 +215,13 @@ windows_http_acl 'http://+:50051/' do
 end
 ```
 
-### windows_pagefile
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Configures the file that provides virtual memory for applications requiring more memory than available RAM or that are paged out to free up memory in use.
-
-#### Actions
-
-- `:set` - configures the default pagefile, creating if it doesn't exist.
-- `:delete` - deletes the specified pagefile.
-
-#### Properties
-
-- `path` - the path to the pagefile, String, name_property: true
-- `system_managed` - configures whether the system manages the pagefile size. [true, false]
-- `automatic_managed` - all of the settings are managed by the system. If this is set to true, other settings will be ignored. [true, false], default: false
-- `initial_size` - initial size of the pagefile in megbytes. Integer
-- `maximum_size` - maximum size of the pagefile in megbytes. Integer
-
-### windows_printer_port
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Create and delete TCP/IPv4 printer ports.
-
-#### Actions
-
-- `:create` - Create a TCIP/IPv4 printer port. This is the default action.
-- `:delete` - Delete a TCIP/IPv4 printer port
-
-#### Properties
-
-- `ipv4_address` - Name attribute. Required. IPv4 address, e.g. '10.0.24.34'
-- `port_name` - Port name. Optional. Defaults to 'IP_' + `ipv4_address`
-- `port_number` - Port number. Optional. Defaults to 9100.
-- `port_description` - Port description. Optional.
-- `snmp_enabled` - Boolean. Optional. Defaults to false.
-- `port_protocol` - Port protocol, 1 (RAW), or 2 (LPR). Optional. Defaults to 1.
-
-#### Examples
-
-Create a TCP/IP printer port named 'IP_10.4.64.37' with all defaults
-
-```ruby
-windows_printer_port '10.4.64.37' do
-  action :create
-end
-```
-
-Delete a printer port
-
-```ruby
-windows_printer_port '10.4.64.37' do
-  action :delete
-end
-```
-
-Delete a port with a custom port_name
-
-```ruby
-windows_printer_port '10.4.64.38' do
-  port_name 'My awesome port'
-  action :delete
-end
-```
-
-Create a port with more options
-
-```ruby
-windows_printer_port '10.4.64.39' do
-  port_name 'My awesome port'
-  snmp_enabled true
-  port_protocol 2
-end
-```
-
-### windows_printer
-
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Create Windows printer. Note that this doesn't currently install a printer driver. You must already have the driver installed on the system.
-
-The Windows Printer resource will automatically create a TCP/IP printer port for you using the `ipv4_address` property. If you want more granular control over the printer port, just create it using the `windows_printer_port` resource before creating the printer.
-
-#### Actions
-
-- `:create` - Create a new printer
-- `:delete` - Delete an existing printer
-
-#### Properties
-
-- `device_id` - Printer queue name, e.g. 'HP LJ 5200 in fifth floor copy room'. Name property.
-- `comment` - Optional string describing the printer queue.
-- `default` - Boolean. Optional. Defaults to false. Note that Windows sets the first printer defined to the default printer regardless of this setting.
-- `driver_name` - String. Required. Exact name of printer driver. Note that the printer driver must already be installed on the node.
-- `location` - Printer location, e.g. 'Fifth floor copy room', or 'US/NYC/Floor42/Room4207'
-- `shared` - Boolean. Defaults to false.
-- `share_name` - Printer share name.
-- `ipv4_address` - Printer's IPv4 address, e.g. '10.4.64.23'. You don't have to be able to ping the IP address to set it. Required.
-
-An error of "Set-WmiInstance : Generic failure" is most likely due to the printer driver name not matching or not being installed.
-
-#### Examples
-
-Create a printer
-
-```ruby
-windows_printer 'HP LaserJet 5th Floor' do
-  driver_name 'HP LaserJet 4100 Series PCL6'
-  ipv4_address '10.4.64.38'
-end
-```
-
-Delete a printer. Note: this doesn't delete the associated printer port. See `windows_printer_port` above for how to delete the port.
-
-```ruby
-windows_printer 'HP LaserJet 5th Floor' do
-  action :delete
-end
-```
-
 ### windows_share
 
+`Note`: This resource is now included in Chef 14.7 and later. There is no need to depend on the Windows cookbook for this resource.
+
 Creates, modifies and removes Windows shares. All properties are idempotent.
+
+`Note`: This resource uses PowerShell cmdlets introduced in Windows 2012/8.
 
 #### Actions
 
@@ -530,156 +262,92 @@ windows_share "foo" do
 end
 ```
 
-### windows_shortcut
+### windows_user_privilege
 
-`Note`: This resource is now included in Chef 14 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Creates and modifies Windows shortcuts.
+Adds the `principal` (User/Group) to the specified privileges (such as `Logon as a batch job` or `Logon as a Service`).
 
 #### Actions
 
-- `:create` - create or modify a windows shortcut
+- `:add` - add the specified privileges to the `principal`
+- `:remove` - remove the specified privilege of the `principal`
 
 #### Properties
 
-- `shortcut_name` - The name for the shortcut if it differs from the resource name. Name property
-- `target` - Where the shortcut links to.
-- `arguments` - arguments to pass to the target when the shortcut is executed
-- `description` - description of the shortcut
-- `cwd` - Working directory to use when the target is executed
-- `iconlocation` - Icon to use, in the format of `"path, index"` where index is which icon in that file to use (See [WshShortcut.IconLocation](https://msdn.microsoft.com/en-us/library/3s9bx7at.aspx))
+- `principal` - Name attribute, Required, String. The user or group to be granted privileges.
+- `privilege` - Required, String/Array. The privilege(s) to be granted.
 
 #### Examples
 
-Add a shortcut to all users desktop:
+Grant the Administrator user the `Logon as a batch job` and `Logon as a service` privilege.
 
 ```ruby
-require 'win32ole'
-all_users_desktop = WIN32OLE.new("WScript.Shell").SpecialFolders("AllUsersDesktop")
-
-windows_shortcut "#{all_users_desktop}/Notepad.lnk" do
-  target "C:\\Windows\\notepad.exe"
-  description "Launch Notepad"
-  iconlocation "C:\\Windows\\notepad.exe,0"
+windows_user_privilege 'Administrator' do
+  privilege %w(SeBatchLogonRight SeServiceLogonRight)
 end
 ```
 
-### windows_path
-
-#### Actions
-
-- `:add` - Add an item to the system path
-- `:remove` - Remove an item from the system path
-
-#### Properties
-
-- `path` - Name attribute. The name of the value to add to the system path
-
-#### Examples
-
-Add Sysinternals to the system path
+Remove `Logon as a batch job` privilege of Administrator.
 
 ```ruby
-windows_path 'C:\Sysinternals' do
-  action :add
-end
-```
-
-Remove 7-Zip from the system path
-
-```ruby
-windows_path 'C:\7-Zip' do
+windows_user_privilege 'Administrator' do
+  privilege %w(SeBatchLogonRight)
   action :remove
 end
 ```
 
-### windows_task
+#### Available Privileges
 
-`Note`: This resource is now included in Chef 13 and later. There is no need to depend on the Windows cookbook for this resource.
-
-Creates, deletes or runs a Windows scheduled task. Requires Windows Server 2008 due to API usage.
-
-#### Actions
-
-- `:create` - creates a task (or updates existing if user or command has changed)
-- `:delete` - deletes a task
-- `:run` - runs a task
-- `:end` - ends a task
-- `:change` - changes the un/pw or command of a task
-- `:enable` - enable a task
-- `:disable` - disable a task
-
-#### Properties
-
-- `task_name` - name attribute, The task name. ("Task Name" or "/Task Name")
-- `force` - When used with create, will update the task.
-- `command` - The command the task will run.
-- `cwd` - The directory the task will be run from.
-- `user` - The user to run the task as. (defaults to 'SYSTEM')
-- `password` - The user's password. (requires user)
-- `run_level` - Run with `:limited` or `:highest` privileges.
-- `frequency` - Frequency with which to run the task. (default is :hourly. Other valid values include :minute, :hourly, :daily, :weekly, :monthly, :once, :on_logon, :onstart, :on_idle) :once requires start_time
-- `frequency_modifier` - Multiple for frequency. (15 minutes, 2 days). Monthly tasks may also use these values": ('FIRST', 'SECOND', 'THIRD', 'FOURTH', 'LAST', 'LASTDAY')
-- `start_day` - Specifies the first date on which the task runs. Optional string (MM/DD/YYYY)
-- `start_time` - Specifies the start time to run the task. Optional string (HH:mm)
-- `interactive_enabled` - (Allow task to run interactively or non-interactively. Requires user and password.)
-- `day` - For monthly or weekly tasks, the day(s) on which the task runs. (MON - SUN, *, 1 - 31)
-- `months` - The Months of the year on which the task runs. (JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC, *). Multiple months should be comma delimited.
-- `idle_time` - For :on_idle frequency, the time (in minutes) without user activity that must pass to trigger the task. (1 - 999)
-
-#### Examples
-
-Create a `chef-client` task with TaskPath `\` running every 15 minutes
-
-```ruby
-windows_task 'chef-client' do
-  user 'Administrator'
-  password '$ecR3t'
-  cwd 'C:\\chef\\bin'
-  command 'chef-client -L C:\\tmp\\'
-  run_level :highest
-  frequency :minute
-  frequency_modifier 15
-end
 ```
-
-Update `chef-client` task with new password and log location
-
-```ruby
-windows_task 'chef-client' do
-  user 'Administrator'
-  password 'N3wPassW0Rd'
-  cwd 'C:\\chef\\bin'
-  command 'chef-client -L C:\\chef\\logs\\'
-  action :change
-end
-```
-
-Delete a task named `old task`
-
-```ruby
-windows_task 'old task' do
-  action :delete
-end
-```
-
-Enable a task named `chef-client`
-
-```ruby
-windows_task 'chef-client' do
-  action :enable
-end
-```
-
-Disable a task named `ProgramDataUpdater` with TaskPath `\Microsoft\Windows\Application Experience\`
-
-```ruby
-windows_task '\Microsoft\Windows\Application Experience\ProgramDataUpdater' do
-  action :disable
-end
+SeTrustedCredManAccessPrivilege      Access Credential Manager as a trusted caller
+SeNetworkLogonRight                  Access this computer from the network
+SeTcbPrivilege                       Act as part of the operating system
+SeMachineAccountPrivilege            Add workstations to domain
+SeIncreaseQuotaPrivilege             Adjust memory quotas for a process
+SeInteractiveLogonRight              Allow log on locally
+SeRemoteInteractiveLogonRight        Allow log on through Remote Desktop Services
+SeBackupPrivilege                    Back up files and directories
+SeChangeNotifyPrivilege              Bypass traverse checking
+SeSystemtimePrivilege                Change the system time
+SeTimeZonePrivilege                  Change the time zone
+SeCreatePagefilePrivilege            Create a pagefile
+SeCreateTokenPrivilege               Create a token object
+SeCreateGlobalPrivilege              Create global objects
+SeCreatePermanentPrivilege           Create permanent shared objects
+SeCreateSymbolicLinkPrivilege        Create symbolic links
+SeDebugPrivilege                     Debug programs
+SeDenyNetworkLogonRight              Deny access this computer from the network
+SeDenyBatchLogonRight                Deny log on as a batch job
+SeDenyServiceLogonRight              Deny log on as a service
+SeDenyInteractiveLogonRight          Deny log on locally
+SeDenyRemoteInteractiveLogonRight    Deny log on through Remote Desktop Services
+SeEnableDelegationPrivilege          Enable computer and user accounts to be trusted for delegation
+SeRemoteShutdownPrivilege            Force shutdown from a remote system
+SeAuditPrivilege                     Generate security audits
+SeImpersonatePrivilege               Impersonate a client after authentication
+SeIncreaseWorkingSetPrivilege        Increase a process working set
+SeIncreaseBasePriorityPrivilege      Increase scheduling priority
+SeLoadDriverPrivilege                Load and unload device drivers
+SeLockMemoryPrivilege                Lock pages in memory
+SeBatchLogonRight                    Log on as a batch job
+SeServiceLogonRight                  Log on as a service
+SeSecurityPrivilege                  Manage auditing and security log
+SeRelabelPrivilege                   Modify an object label
+SeSystemEnvironmentPrivilege         Modify firmware environment values
+SeManageVolumePrivilege              Perform volume maintenance tasks
+SeProfileSingleProcessPrivilege      Profile single process
+SeSystemProfilePrivilege             Profile system performance
+SeUnsolicitedInputPrivilege          "Read unsolicited input from a terminal device"
+SeUndockPrivilege                    Remove computer from docking station
+SeAssignPrimaryTokenPrivilege        Replace a process level token
+SeRestorePrivilege                   Restore files and directories
+SeShutdownPrivilege                  Shut down the system
+SeSyncAgentPrivilege                 Synchronize directory service data
+SeTakeOwnershipPrivilege             Take ownership of files or other objects
 ```
 
 ### windows_zipfile
+
+`Note`: This resource has been deprecated as Chef Infra Client 15.0 shipped with a new archive_file resource, which natively handles multiple archive formats. Please update any cookbooks using this resource to instead use the `archive_file` resource: https://docs.chef.io/resource_archive_file.html
 
 Most version of Windows do not ship with native cli utility for managing compressed files. This resource provides a pure-ruby implementation for managing zip files. Be sure to use the `not_if` or `only_if` meta parameters to guard the resource for idempotence or action will be taken every Chef run.
 

@@ -21,13 +21,12 @@
 # limitations under the License.
 #
 
+require 'chef/util/path_helper'
+
 property :path, String, name_property: true
 property :source, String
 property :overwrite, [true, false], default: false
 property :checksum, String
-
-include Windows::Helper
-require 'find'
 
 action :unzip do
   ensure_rubyzip_gem_installed
@@ -49,7 +48,7 @@ action :unzip do
                       new_resource.source
                     end
 
-  cache_file_path = win_friendly_path(cache_file_path)
+  cache_file_path = Chef::Util::PathHelper.cleanpath(cache_file_path)
 
   converge_by("unzip #{new_resource.source}") do
     ruby_block 'Unzipping' do
@@ -112,8 +111,12 @@ action :zip do
 end
 
 action_class do
+  include Windows::Helper
+  require 'find'
+
   def ensure_rubyzip_gem_installed
     require 'zip'
+    Chef::Log.warn('The windows_zipfile resource has been deprecated as Chef Infra Client 15.0 shipped with a new archive_file resource, which natively handles multiple archive formats. Please update any cookbooks using this resource to instead use the `archive_file` resource: https://docs.chef.io/resource_archive_file.html')
   rescue LoadError
     Chef::Log.info("Missing gem 'rubyzip'...installing now.")
     chef_gem 'rubyzip' do
