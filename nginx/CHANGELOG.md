@@ -2,59 +2,6 @@
 
 This file is used to list changes made in each version of the nginx cookbook.
 
-## Unreleased
-
-## 10.0.1 (2019-08-04)
-
-- Maintenance: Add contributing.md file for cookbook health metrics
-
-## 10.0.0 (2019-08-04)
-
-- *Breaking Change:* Remove all attributes
-- *Breaking Change:* Remove all recipes
-- *Breaking Change:* Remove source install
-- *Breaking Change:* Remove modules
-- *Breaking Change:* Remove community_cookbook_releaser gem
-- *Breaking Change:* Support only Operating Systems with systemd
-  - Remove support for Fedora, Amazon Linux, CentOS 6, openSUSE Leap 42
-- *Breaking Change:* Cookbook now requires Chef >= 14
-- Feature: Add resources for all recipes
-- Feature: Add nginx_install custom resource with source properties distro, repo, epel and passenger
-- Feature: Add nginx_config custom resource
-- Feature: Add support for openSUSE Leap 15
-- Feature: Add support for Amazon Linux 2
-- Feature: Add support to deactivate anonymous telemetry reporting when using Passenger.
-- Bug Fix: Ensure systemd unit file is reloaded (specifically for upgrade or downgrade) source complile install method.
-- Bug Fix: Ensure apt-transport-https package is installed on Debian/Ubuntu for apt_repository resource
-- Bug Fix: compiling nginx from source triggers systemd to reload services to avoid systemd run 'systemctl daemon-reload' related errors
-- Maintenance: Move spec/libraries to spec/unit/libraries
-- Maintenance: Bump ohai dependency to ~> 5.2
-- CI: Update kitchen to use chef solo
-- CI: Add CircleCI testing
-- CI: Update circleci sous-chefs orb to version 2
-- Tidy: Remove unused files from the repository
-
-## 9.0.0 (2018-11-13)
-
-- This cookbook now requires Chef 13.3 or later, but no longer requires the zypper cookbook. This cookbook was throwing deprecation warnings for users of current Chef 14 releases.
-
-## 8.1.6 (2018-10-05)
-
-- passenger: fixed install order
-- passenger Ubuntu 18.04 support
-- Evaluate ohai_plugin_enabled in the source recipe
-- Abstract nginx users home path to attribute
-
-## 8.1.5 (2018-07-23)
-
-- Fixes cookbook fails when installing repo passenger because there is no service declaration inline
-- Add proxy buffers options
-
-## 8.1.4 (2018-07-18)
-
-- Adds the ability to toggle Ohai Plugin
-- Use build_essential resource instead of the cookbook so we can use the built in resource on Chef 14+
-
 ## 8.1.2 (2018-02-26)
 
 - Add map_hash_max_size as configuration option

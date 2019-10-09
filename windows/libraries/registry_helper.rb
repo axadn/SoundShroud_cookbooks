@@ -45,7 +45,7 @@ module Windows
       hkey = {
         'HKLM' => 'HKEY_LOCAL_MACHINE',
         'HKCU' => 'HKEY_CURRENT_USER',
-        'HKU' => 'HKEY_USERS',
+        'HKU'  => 'HKEY_USERS',
       }[hive_name] || hive_name
 
       Chef::Log.debug("Hive resolved to #{hkey}")
@@ -257,9 +257,9 @@ module Windows
       end
 
       Chef::Log.debug("Resolved user SID to #{sid}")
-      sid
+      return sid
     rescue
-      nil
+      return nil
     end
 
     def hive_loaded?(path)
@@ -350,7 +350,7 @@ module Windows
 end
 
 module Registry
-  module_function # rubocop: disable Lint/UselessAccessModifier
+  module_function
 
   extend Windows::RegistryHelper
 end

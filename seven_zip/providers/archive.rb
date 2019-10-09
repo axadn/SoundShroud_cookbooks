@@ -1,9 +1,9 @@
 #
 # Author:: Shawn Neal (<sneal@sneal.net>)
-# Cookbook:: seven_zip
+# Cookbook Name:: seven_zip
 # Provider:: archive
 #
-# Copyright:: 2013-2017, Daptiv Solutions LLC
+# Copyright:: 2013, Daptiv Solutions LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 require 'fileutils'
 require 'chef/mixin/shell_out'
-require 'chef/util/path_helper'
 
 include Chef::Mixin::ShellOut
 include Windows::Helper
@@ -29,14 +28,15 @@ def whyrun_supported?
   true
 end
 
+use_inline_resources
+
 action :extract do
   converge_by("Extract #{@new_resource.source} => #{@new_resource.path} (overwrite=#{@new_resource.overwrite})") do
     FileUtils.mkdir_p(@new_resource.path) unless Dir.exist?(@new_resource.path)
     local_source = cached_file(@new_resource.source, @new_resource.checksum)
-    overwrite_file = @new_resource.overwrite ? ' -y' : ' -aos'
     cmd = "\"#{seven_zip_exe}\" x"
-    cmd << overwrite_file
-    cmd << " -o\"#{Chef::Util::PathHelper.cleanpath(@new_resource.path)}\""
+    cmd << ' -y' if @new_resource.overwrite
+    cmd << " -o\"#{win_friendly_path(@new_resource.path)}\""
     cmd << " \"#{local_source}\""
     Chef::Log.debug(cmd)
     shell_out!(cmd, timeout: extract_timeout)
@@ -44,9 +44,13 @@ action :extract do
 end
 
 def seven_zip_exe
-  path = node['seven_zip']['home'] || seven_zip_exe_from_registry
+  path = if node['seven_zip']['home']
+           node['seven_zip']['home']
+         else
+           seven_zip_exe_from_registry
+         end
   Chef::Log.debug("Using 7-zip home: #{path}")
-  Chef::Util::PathHelper.cleanpath(::File.join(path, '7z.exe'))
+  win_friendly_path(::File.join(path, '7z.exe'))
 end
 
 def seven_zip_exe_from_registry

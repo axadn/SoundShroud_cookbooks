@@ -1,4 +1,4 @@
-name "metachef"
+name             "metachef"
 maintainer       "Philip (flip) Kromer - Infochimps, Inc"
 maintainer_email "coders@infochimps.com"
 license          "Apache 2.0"

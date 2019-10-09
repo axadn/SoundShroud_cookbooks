@@ -44,12 +44,13 @@ Should work on common Unix/Linux systems with typical userland utilities like ta
 
 ### Chef
 
-- Chef 13.4+
+- Chef 12.7+
 
 ### Cookbooks
 
 - build-essential
 - seven_zip
+- windows
 
 ## Attributes
 
@@ -65,7 +66,7 @@ Customize the attributes to suit site specific conventions and defaults.
 
 ## Resources
 
-- `ark` - does the extract/build/configure
+- `ark` - does the extract/build/configure 
 
 ### Actions
 

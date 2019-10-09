@@ -20,7 +20,7 @@
 
 Chef::Recipe.send(:include, NodeJs::Helper)
 
-build_essential 'install build tools'
+include_recipe 'build-essential'
 
 case node['platform_family']
 when 'rhel', 'fedora', 'amazon'
