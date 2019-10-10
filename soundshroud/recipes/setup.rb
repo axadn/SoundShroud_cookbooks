@@ -3,6 +3,7 @@
 include_recipe "ruby-ng::dev"
 include_recipe "nodejs"
 include_recipe "nodejs::npm"
+include_recipe "runit"
 include_recipe "redis"
 include_recipe "redis::server"
 include_recipe "postgres"
