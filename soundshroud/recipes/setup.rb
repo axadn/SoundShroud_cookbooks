@@ -2,8 +2,8 @@
 
 include_recipe "ruby-ng::dev"
 include_recipe "nodejs"
-include_recipe "nodejs::npm"
-include_recipe "redis::server"
+include_recipe "redisio"
+include_recipe "redisio::enable"
 include_recipe "postgres"
 include_recipe "nginx"
 include_recipe "unicorn"
