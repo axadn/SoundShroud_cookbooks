@@ -45,7 +45,7 @@ case "$1" in
         <% node[:soundshroud][:environment].each do |k, v| %>
         export <%= k%>="<%= v%>"
         <% end %>
-        $backgroundcmd
+        sudo $backgroundcmd
         if [ -z "$user" ]; then
             sudo -E $cmd >> "$stdout_log" 2>> "$stderr_log" &
         else
