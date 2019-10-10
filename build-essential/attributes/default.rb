@@ -1,8 +1,8 @@
 #
-# Cookbook:: build-essential
+# Cookbook Name:: build-essential
 # Attributes:: default
 #
-# Copyright:: 2008-2017, Chef Software, Inc.
+# Copyright 2008-2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,4 +18,5 @@
 #
 
 default['build-essential']['compile_time'] = false
-default['build-essential']['msys2']['path'] = "#{ENV['SYSTEMDRIVE']}\\msys2"
+default['build-essential']['mingw32']['path'] = "#{ENV['SYSTEMDRIVE']}\\mingw32"
+default['build-essential']['mingw64']['path'] = "#{ENV['SYSTEMDRIVE']}\\mingw64"

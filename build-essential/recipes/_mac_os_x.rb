@@ -1,9 +1,8 @@
 #
-# Author:: Richard Lavey (richard.lavey@calastone.com)
-# Cookbook Name:: windows
-# Resource:: dns
+# Cookbook Name:: build-essential
+# Recipe:: mac_os_x
 #
-# Copyright:: 2015, Calastone Ltd.
+# Copyright 2008-2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,13 +17,6 @@
 # limitations under the License.
 #
 
-actions :create, :delete
-default_action :create
-
-attribute :host_name, kind_of: String, name_property: true, required: true
-attribute :record_type, kind_of: String, default: 'A', regex: /^(?:A|CNAME)$/
-attribute :dns_server, kind_of: String, default: '.'
-attribute :target, kind_of: [Array, String], required: true
-attribute :ttl, kind_of: Integer, required: false, default: 0
-
-attr_accessor :exists
+potentially_at_compile_time do
+  xcode_command_line_tools 'install'
+end

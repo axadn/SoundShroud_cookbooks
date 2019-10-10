@@ -1,8 +1,8 @@
 # build-essential Cookbook
 
-[![Cookbook Version](http://img.shields.io/cookbook/v/build-essential.svg)][cookbook] [![Build Status](https://travis-ci.org/chef-cookbooks/build-essential.svg?branch=master)](https://travis-ci.org/chef-cookbooks/build-essential)
+[![Cookbook Version](http://img.shields.io/cookbook/v/build-essential.svg)][cookbook] [![Build Status](http://img.shields.io/travis/chef-cookbooks/build-essential.svg)][travis]
 
-Installs packages required for compiling C software from source. Use this cookbook if you wish to compile C programs, or install RubyGems with native extensions. Contains a resource, 'build_essential', as as well as a default recipe that simply calls that same resource.
+Installs packages required for compiling C software from source. Use this cookbook if you wish to compile C programs, or install RubyGems with native extensions.
 
 ## Requirements
 
@@ -10,15 +10,15 @@ Installs packages required for compiling C software from source. Use this cookbo
 
 - Debian/Ubuntu
 - RHEL/CentOS/Scientific/Amazon/Oracle
-- openSUSE / SUSE Enterprise Linux
+- openSUSE
 - SmartOS
 - Fedora
-- Mac OS X 10.9+
+- Mac OS X
 - FreeBSD
 
 ### Chef
 
-- Chef 12.7+
+- Chef 12+
 
 ### Cookbooks
 
@@ -29,16 +29,13 @@ Installs packages required for compiling C software from source. Use this cookbo
 
 ## Attributes
 
-Attribute                                  |            Default            | Description
------------------------------------------- | :---------------------------: | -----------------------------------------------------
-`node['build-essential']['compile_time']`  |            `false`            | Execute resources at compile time
-`node['build-essential']['msys2']['path']` | `#{ENV['SYSTEMDRIVE']\\msys2` | Destination for msys2 build tool chain (Windows only)
+Attribute                                    | Default                         | Description
+-------------------------------------------- | :-----------------------------: | -----------------------------------
+`node['build-essential']['compile_time']`    | `false`                         | Execute resources at compile time
+`node['build-essential']['mingw32']['path']` | `#{ENV['SYSTEMDRIVE']\\mingw32` | Destination for mingw 32-bit compiler toolchain (Windows only)
+`node['build-essential']['mingw64']['path']` | `#{ENV['SYSTEMDRIVE']\\mingw64` | Destination for mingw 64-bit compiler toolchain (Windows only)
 
 ## Usage
-
-### Recipe Usage
-
-The recipe simply calls the build_essential resource, but it ideal for adding to roles or node run lists.
 
 Include the build-essential recipe in your run list:
 
@@ -92,31 +89,11 @@ For RubyGems that include native C extensions you wish to use with Chef, you sho
    chef_gem 'gem-with-native-extension'
   ```
 
-### Resource Usage
+## License & Authors
 
-The cookbook includes a resource 'build_essential' that can be included in your cookbook to install the necessary build-essential packages
+**Author:** Cookbook Engineering Team ([cookbooks@chef.io](mailto:cookbooks@chef.io))
 
-Simple package installation during the client run:
-
-```ruby
-build_essential 'some name you choose'
-```
-
-Package installation during the compile phase:
-
-```ruby
-build_essential 'some name you choose' do
-  compile_time false
-end
-```
-
-## Maintainers
-
-This cookbook is maintained by Chef's Community Cookbook Engineering team. Our goal is to improve cookbook quality and to aid the community in contributing to cookbooks. To learn more about our team, process, and design goals see our [team documentation](https://github.com/chef-cookbooks/community_cookbook_documentation/blob/master/COOKBOOK_TEAM.MD). To learn more about contributing to cookbooks like this see our [contributing documentation](https://github.com/chef-cookbooks/community_cookbook_documentation/blob/master/CONTRIBUTING.MD), or if you have general questions about this cookbook come chat with us in #cookbok-engineering on the [Chef Community Slack](http://community-slack.chef.io/)
-
-## License
-
-**Copyright:** 2009-2016, Chef Software, Inc.
+**Copyright:** 2009-2015, Chef Software, Inc.
 
 ```
 Licensed under the Apache License, Version 2.0 (the "License");

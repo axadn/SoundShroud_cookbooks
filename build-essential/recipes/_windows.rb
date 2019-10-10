@@ -1,8 +1,8 @@
 #
-# Cookbook:: build-essential
+# Cookbook Name:: build-essential
 # Recipe:: _windows
 #
-# Copyright:: 2016-2017, Chef Software, Inc.
+# Copyright 2016, Chef Software, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,34 +20,65 @@
 node.default['seven_zip']['syspath'] = true
 include_recipe 'seven_zip::default'
 
-tool_path = node['build-essential']['msys2']['path']
+tool32_path = node['build-essential']['mingw32']['path']
+tool64_path = node['build-essential']['mingw64']['path']
 
-directory tool_path do
-  action :create
-  recursive true
-end
+[tool32_path, tool64_path].each do |tool_path|
+  potentially_at_compile_time do
+    directory tool_path do
+      action :create
+      recursive true
+    end
 
-[
-  'base-devel', # Brings down msys based bash/make/awk/patch/stuff..
-  'mingw-w64-x86_64-toolchain', # Puts 64-bit SEH mingw toolchain in msys2\mingw64
-  'mingw-w64-i686-toolchain' # Puts 32-bit DW2 mingw toolchain in msys2\ming32
-].each do |package|
-  msys2_package package do
-    root tool_path
+    mingw_get "msys core in #{tool_path}" do
+      package 'msys-base=2013072300-msys-bin.meta'
+      root tool_path
+    end
+
+    [
+      'msys-coreutils-ext=5.97-*',
+      'msys-perl-bin=5.8.8-*',
+      'msys-patch-bin=2.6.1-*',
+      'msys-bison-bin=2.4.2-*',
+      'msys-flex-bin=2.5.35-*',
+      'msys-m4-bin=1.4.16-*',
+      'mingw32-bsdtar-bin=2.8.3-*'
+    ].each do |package_pattern|
+      mingw_get "#{package_pattern} in #{tool_path}" do
+        package package_pattern
+        root tool_path
+      end
+    end
+
+    # Due to a bug in msys 1.0.18, make doesn't handle parallel builds.
+    # Use msys 1.0.17 if you want your -j $n flags to work on windows.
+    [
+      'msys-core-ext=1.0.17-*',
+      'msys-core-bin=1.0.17-*'
+    ].each do |package_pattern|
+      mingw_get "Fixing #{package_pattern} in #{tool_path}" do
+        package package_pattern
+        root tool_path
+        action :upgrade
+      end
+    end
+
+    remote_file "#{tool_path}\\bin\\tar.exe" do
+      source "file:///#{tool_path.tr('\\', '/')}/bin/bsdtar.exe"
+    end
   end
 end
 
-# Certain build steps assume that a tar command is available on the
-# system path. The default tar present in msys2\usr\bin is an msys GNU tar
-# that expects forward slashes and consider ':' to be a remote tape separator
-# or something weird like that. We therefore drop bat file in msys2\bin that
-# redirect to the underlying executables without mucking around with
-# msys2's /usr/bin itself.
-{
-  'bsdtar.exe' => 'tar.bat',
-  'patch.exe' => 'patch.bat',
-}.each do |reference, link|
-  file "#{tool_path}\\bin\\#{link}" do
-    content "@%~dp0..\\usr\\bin\\#{reference} %*"
+potentially_at_compile_time do
+  mingw_tdm_gcc 'TDM GCC 32-bit with SJLJ' do
+    version '5.1.0'
+    flavor :sjlj_32
+    root tool32_path
+  end
+
+  mingw_tdm_gcc 'TDM GCC 64-bit with SJLJ/SEH' do
+    version '5.1.0'
+    flavor :seh_sjlj_64
+    root tool64_path
   end
 end
