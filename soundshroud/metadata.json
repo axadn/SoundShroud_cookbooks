@@ -14,7 +14,8 @@
     "postgres": ">= 0.0.0",
     "nginx": ">= 0.0.0",
     "unicorn": ">= 0.0.0",
-    "redis": ">= 0.0.0"
+    "redis": ">= 0.0.0",
+    "compat_resource": ">= 0.0.0"
   },
   "recommendations": {
   },
