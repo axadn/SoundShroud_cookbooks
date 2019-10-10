@@ -43,5 +43,7 @@ end
 unicorn_config "/opt/unicorn.rb" do
   listen ({"unix:/tmp/sockets/unicorn.sock": nil})
   working_directory node[:soundshroud][:path]
+  stderr_path '/opt/log.log'
+  stdout_path '/opt/log.log'
   # /config/unicorn.rb
 end
