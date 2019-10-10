@@ -11,10 +11,12 @@
 
 dir="<%= node[:soundshroud][:path] %>"
 cmd="<%= node[:soundshroud][:start_cmd] %>"
+backgroundcmd= "<%= node[:soundshroud][:background_start_cmd] %>"
 # user="root"
 
 name=`basename $0`
 pid_file="/var/run/$name.pid"
+resque_pid='/var/run/resqworker.pid'
 stdout_log="/var/log/$name.log"
 stderr_log="/var/log/$name.err"
 
@@ -43,7 +45,7 @@ case "$1" in
         <% node[:soundshroud][:environment].each do |k, v| %>
         export <%= k%>="<%= v%>"
         <% end %>
-
+        $backgroundcmd
         if [ -z "$user" ]; then
             sudo -E $cmd >> "$stdout_log" 2>> "$stderr_log" &
         else
