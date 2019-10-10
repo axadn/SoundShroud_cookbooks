@@ -1,8 +1,8 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Attribute::redis_gem
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 # limitations under the License.
 #
 
-# Allow for a redis ruby gem to be installed
+#Allow for a redis ruby gem to be installed
 default['redisio']['gem']['name'] = 'redis'
 default['redisio']['gem']['version'] = nil
+

@@ -1,8 +1,8 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Recipe:: enable
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,13 +21,9 @@
 redis = node['redisio']
 
 redis['servers'].each do |current_server|
-  server_name = current_server['name'] || current_server['port']
-  resource_name = if node['redisio']['job_control'] == 'systemd'
-                    "service[redis@#{server_name}]"
-                  else
-                    "service[redis#{server_name}]"
-                  end
-  resource = resources(resource_name)
+  server_name = current_server["name"] || current_server["port"]
+  resource = resources("service[redis#{server_name}]")
   resource.action Array(resource.action)
-  resource.action.concat [:start, :enable]
+  resource.action << :start
+  resource.action << :enable
 end

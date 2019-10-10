@@ -1,8 +1,8 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Recipe:: install
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,23 +17,22 @@
 # limitations under the License.
 #
 if node['redisio']['package_install']
-  package 'redisio_package_name' do
+  package "redisio_package_name" do
     package_name node['redisio']['package_name']
-    version node['redisio']['version'] if node['redisio']['version']
     action :install
   end
 else
   include_recipe 'redisio::_install_prereqs'
-  build_essential 'install build deps'
+  include_recipe 'build-essential::default'
 
   redis = node['redisio']
   location = "#{redis['mirror']}/#{redis['base_name']}#{redis['version']}.#{redis['artifact_type']}"
 
-  redisio_install 'redis-installation' do
-    version redis['version'] if redis['version']
+  redisio_install "redis-installation" do
+    version redis['version']
     download_url location
     safe_install redis['safe_install']
-    install_dir redis['install_dir'] if redis['install_dir']
+    install_dir redis['install_dir']
   end
 end
 

@@ -1,9 +1,9 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Resource::configure
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
-# Copyright:: 2013, Rackspace Hosting <ryan.cleere@rackspace.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Rackspace Hosting <ryan.cleere@rackspace.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,21 @@
 #
 actions :run
 
-default_action :run
+#Uncomment this and remove the block in initialize when ready to drop support for chef <= 0.10.8
+#default_action :run
 
-# Configuration attributes
-attribute :version, kind_of: String
-attribute :base_piddir, kind_of: String, default: '/var/run/redis'
-attribute :user, kind_of: String, default: 'redis'
-attribute :group, kind_of: String, default: 'redis'
+#Configuration attributes
+attribute :version, :kind_of => String
+attribute :base_piddir, :kind_of => String, :default => '/var/run/redis'
+attribute :user, :kind_of => String, :default => 'redis'
+attribute :group, :kind_of => String, :default => 'redis'
 
-attribute :default_settings, kind_of: Hash
-attribute :servers, kind_of: Array
+attribute :default_settings, :kind_of => Hash
+attribute :servers, :kind_of => Array
+
+def initialize(name, run_context=nil)
+  super
+  @action = :run
+  @tarball = nil
+end
+

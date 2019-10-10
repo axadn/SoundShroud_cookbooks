@@ -1,8 +1,8 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Recipe:: disable
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
 #
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,10 @@
 redis = node['redisio']
 
 redis['servers'].each do |current_server|
-  server_name = current_server['name'] || current_server['port']
+  server_name = current_server["name"] || current_server["port"]
   resource = resources("service[redis#{server_name}]")
   resource.action Array(resource.action)
   resource.action << :stop
   resource.action << :disable
 end
+

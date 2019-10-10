@@ -1,8 +1,8 @@
 #
-# Cookbook:: redisio
+# Cookbook Name:: redisio
 # Recipe:: _install_prereqs
 #
-# Copyright:: 2013, Brian Bianco <brian.bianco@gmail.com>
+# Copyright 2013, Brian Bianco <brian.bianco@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,21 +17,18 @@
 # limitations under the License.
 #
 
-packages_to_install = case node['platform']
-                      when 'debian', 'ubuntu'
-                        %w(
-                          tar
-                        )
-                      when 'redhat', 'centos', 'fedora', 'scientific', 'suse', 'amazon'
-                        %w(
-                          tar
-                        )
-                      else
-                        %w()
-                      end
-
-packages_to_install.each do |pkg|
-  package pkg do
-    action :install
+case node["platform"]
+when 'debian','ubuntu'
+  %w[tar].each do |pkg|
+    package pkg do
+      action :install
+    end
+  end
+when 'redhat','centos','fedora','scientific','suse','amazon'
+  %w[tar].each do |pkg|
+    package pkg do
+      action :install
+      end
   end
 end
+
