@@ -7,7 +7,7 @@ version     "1.0.0"
 depends 'apt', '= 6.1.4'
 depends 'compat_resource'
 depends 'ruby-ng'
-depends 'redisio'
+depends 'redisio', '= 2.3.0'
 depends 'nodejs'
 depends 'postgres'
 depends 'nginx'

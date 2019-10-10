@@ -15,7 +15,7 @@
     "nginx": ">= 0.0.0",
     "unicorn": ">= 0.0.0",
     "compat_resource": ">= 0.0.0",
-    "redisio": ">= 0.0.0"
+    "redisio": "= 2.3.0"
   },
   "recommendations": {
   },
